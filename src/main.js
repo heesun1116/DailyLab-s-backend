@@ -11,10 +11,9 @@ import jwtMiddleware from './lib/jwtMiddleware';
 const app = new Koa();
 const router = new Router();
 
-//process.env 내부 값에 대한 레퍼런스 생성
 const { PORT, MONGO_URI } = process.env;
 
-//서버와 데이터 베이스 연결
+//Server to Database
 mongoose
   .connect(MONGO_URI, { useNewUrlParser: true, useFindAndModify: false })
   .then(() => {
@@ -24,19 +23,20 @@ mongoose
     console.error(e);
   });
 
-//라우터 설정
+//router settings
 
-router.use('/api', api.routes()); //api 라우트 적용
+router.use('/api', api.routes()); //appi route applied
 
-//라우터 적용 전에 bodyParser 적용
+//Apply bodyParser before applying router
 
 app.use(bodyParser());
 app.use(jwtMiddleware);
 
-//app 인스턴스에 라우터 적용
+//app Apply Router to Instance
 app.use(router.routes()).use(router.allowedMethods());
 
-//PORT 가 지정되어 있지 않다면 4000을 사용
+//Use 4000 if no PORT is specified
+
 const port = PORT || 4000;
 app.listen(port, () => {
   console.log('Listenging to port %d', port);

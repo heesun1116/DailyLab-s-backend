@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 const UserSchema = new Schema({
   username: String,
   hashedPassword: String,
+  avatar: String,
 });
 
 //인스턴슨 메서드 생성

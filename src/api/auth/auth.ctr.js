@@ -1,12 +1,13 @@
 import Joi from 'joi';
 import User from '../../models/user';
 
-//회원가입
+//Regiser
 export const register = async (ctx) => {
-  // Request body 검증하기
+  // Request verifying body
   const schema = Joi.object().keys({
     username: Joi.string().alphanum().min(3).max(20).required(),
     password: Joi.string().required(),
+    avatar: Joi.string().required(),
   });
   const result = schema.validate(ctx.request.body);
   if (result.error) {
@@ -14,10 +15,10 @@ export const register = async (ctx) => {
     ctx.body = result.error;
     return;
   }
-  //회원가입
-  const { username, password } = ctx.request.body;
+  //Register
+  const { username, password, avatar } = ctx.request.body;
   try {
-    //username이 존재하는지 확인
+    // Confirm existing the username
     const exists = await User.findByUsername(username);
     if (exists) {
       ctx.status = 409;
@@ -25,14 +26,15 @@ export const register = async (ctx) => {
     }
     const user = new User({
       username,
+      avatar,
     });
-    await user.setPassword(password); // 비밀번호 설정
-    await user.save(); //데이터베이스에 저장
-    // 응답할 데이터에서 hashedPassword 필드 제거
+    await user.setPassword(password); // Password Settings
+    await user.save(); //Save to Database
+    // Remove the hashedPassword field from the data you want to respond to
 
     ctx.body = user.serialize();
 
-    // 토큰발급하기
+    //  issue tokens
     const token = user.generateToken();
     ctx.cookies.set('access_token', token, {
       maxAge: 100 * 60 * 60 * 24 * 7,
@@ -43,11 +45,11 @@ export const register = async (ctx) => {
   }
 };
 
-//로그인
+//Login
 export const login = async (ctx) => {
   const { username, password } = ctx.request.body;
 
-  //username, password가 없으면 에러 처리
+  //Error handling if username, password does not exist
   if (!username || !password) {
     ctx.status = 401;
     return;
@@ -55,19 +57,20 @@ export const login = async (ctx) => {
 
   try {
     const user = await User.findByUsername(username);
-    //계정이 존재하지 않으면 에러 처리
+    //Error handling if account does not exist
     if (!user) {
       ctx.status = 401;
       return;
     }
+
     const valid = await user.checkPassword(password);
-    //잘못된 비밀번호
+    //wrong password
     if (!valid) {
       ctx.status = 401;
       return;
     }
     ctx.body = user.serialize();
-    // 토큰발급하기
+    // issue Token
     const token = user.generateToken();
     ctx.cookies.set('access_token', token, {
       maxAge: 100 * 60 * 60 * 24 * 7,
